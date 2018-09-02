@@ -1,4 +1,10 @@
 const puppeteer = require('puppeteer')
+const { WebClient } = require('@slack/client')
+const { SLACK_TOKEN, SLACK_POST_CHANNEL } = process.env
+let slack = null
+if (SLACK_TOKEN) {
+  slack = new WebClient(SLACK_TOKEN)
+}
 
 const main = async () => {
   const browser = await puppeteer.launch({ headless: true, slowMo: 10 })
@@ -51,6 +57,11 @@ const main = async () => {
   }
 
   browser.close()
+
+  if (slack) {
+    const res = await slack.chat.postMessage({ channel: SLACK_POST_CHANNEL, text: 'done miner' })
+    console.log('post slack:', JSON.stringify(res))
+  }
 }
 
 if (!process.env.SBI_ID || !process.env.SBI_PASS || !process.env.SBI_ORDER_PASS) {
@@ -58,4 +69,9 @@ if (!process.env.SBI_ID || !process.env.SBI_PASS || !process.env.SBI_ORDER_PASS)
   process.exit(1)
 }
 
-main().catch(err => console.error(err))
+main().catch((err) => {
+  console.error(err)
+  if (slack) {
+    slack.chat.postMessage({ channel: SLACK_POST_CHANNEL, text: `error miner: ${JSON.stringify(err)}` })
+  }
+})
