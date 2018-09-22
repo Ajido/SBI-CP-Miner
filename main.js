@@ -34,6 +34,7 @@ const main = async () => {
     await page.waitFor(1000)
   }
 
+  let counter  = 0
   const pages = await browser.pages()
   for (const page of pages) {
     if (page.url().indexOf('/oeapw011?') === -1) {
@@ -57,12 +58,13 @@ const main = async () => {
 
     await page.click('input[name="order_btn"]')
     await page.waitFor(1000)
+    counter++
   }
 
   browser.close()
 
   if (slack) {
-    const res = await slack.chat.postMessage({ channel: SLACK_POST_CHANNEL, text: 'done miner' })
+    const res = await slack.chat.postMessage({ channel: SLACK_POST_CHANNEL, text: `done miner: ${counter}件` })
     console.log('post slack:', JSON.stringify(res))
   }
 }
